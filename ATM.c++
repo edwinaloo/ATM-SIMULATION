@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 #include <unordered_map>
+#include <limits> // Added for std::numeric_limits
 
 // Account Class: Encapsulates account details and provides methods for deposit, withdrawal, and checking balance
 class Account {
@@ -59,6 +60,9 @@ public:
 
     // Pure virtual method to execute transaction
     virtual bool execute() = 0;
+
+    // Virtual destructor
+    virtual ~Transaction() = default;
 };
 
 // Deposit Class: Represents a deposit transaction
@@ -133,6 +137,25 @@ public:
     }
 };
 
+// Function to clear the input buffer
+void clear_input_buffer() {
+    std::cin.clear();
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+}
+
+// Function to display the main menu
+void display_main_menu() {
+    std::cout << "============================\n";
+    std::cout << "Welcome to the ATM Machine\n";
+    std::cout << "============================\n";
+    std::cout << "1. Check Balance\n";
+    std::cout << "2. Deposit\n";
+    std::cout << "3. Withdraw\n";
+    std::cout << "4. Exit\n";
+    std::cout << "============================\n";
+    std::cout << "Please select an option: ";
+}
+
 int main() {
     // Create accounts
     Account account1("123456", "1234", 1000);
@@ -143,16 +166,54 @@ int main() {
     atm.add_account(&account1);
     atm.add_account(&account2);
 
-    // Simulate ATM interactions
-    Account* account = atm.verify_pin("123456", "1234");
-    if (account) {
-        std::cout << "Balance: " << atm.check_balance(account) << std::endl;
-        std::cout << atm.select_transaction(account, "deposit", 200) << std::endl;
-        std::cout << "Balance after deposit: " << atm.check_balance(account) << std::endl;
-        std::cout << atm.select_transaction(account, "withdraw", 100) << std::endl;
-        std::cout << "Balance after withdrawal: " << atm.check_balance(account) << std::endl;
-    } else {
-        std::cout << "Invalid PIN" << std::endl;
+    while (true) {
+        std::string account_number, pin;
+        std::cout << "Enter account number: ";
+        std::cin >> account_number;
+        std::cout << "Enter PIN: ";
+        std::cin >> pin;
+
+        Account* account = atm.verify_pin(account_number, pin);
+        if (account) {
+            int choice;
+            do {
+                display_main_menu();
+                std::cin >> choice;
+                clear_input_buffer();
+
+                switch (choice) {
+                case 1:
+                    std::cout << "Your balance is: " << atm.check_balance(account) << "\n";
+                    break;
+                case 2: {
+                    double amount;
+                    std::cout << "Enter amount to deposit: ";
+                    std::cin >> amount;
+                    clear_input_buffer();
+                    std::cout << atm.select_transaction(account, "deposit", amount) << "\n";
+                    break;
+                }
+                case 3: {
+                    double amount;
+                    std::cout << "Enter amount to withdraw: ";
+                    std::cin >> amount;
+                    clear_input_buffer();
+                    std::cout << atm.select_transaction(account, "withdraw", amount) << "\n";
+                    break;
+                }
+                case 4:
+                    std::cout << "Thank you for using the ATM. Goodbye!\n";
+                    break;
+                default:
+                    std::cout << "Invalid option. Please try again.\n";
+                    break;
+                }
+                std::cout << "\n";
+            } while (choice != 4);
+            break;
+        } else {
+            std::cout << "Invalid account number or PIN. Please try again.\n";
+        }
     }
 
     return 0;
